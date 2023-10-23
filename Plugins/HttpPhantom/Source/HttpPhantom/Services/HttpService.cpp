@@ -24,7 +24,19 @@ bool UHttpService::IsServiceCompleteRequests() const
 	return !HttpRequestPtr.IsValid();
 }
 
-ERequestHttpStatus UHttpService::RequestHttp(EHttpRequestType InRequestType, const FString& InUrl, const TSharedPtr<FJsonObject>& InMessage)
+void UHttpService::UnsubscribeFromAll(UObject* InObject)
+{
+	IServiceInterface::UnsubscribeFromAll(InObject);
+
+	if (!InObject)
+	{
+		return;
+	}
+
+	OnRequestComplete().RemoveAll(InObject);
+}
+
+ERequestHttpStatus UHttpService::RequestHttp(EHttpRequestType InRequestType, const FString& InUrl, const TMap<FString, FString>& InHeaders, const TSharedPtr<FJsonObject>& InMessage)
 {
 	if (InRequestType == EHttpRequestType::None)
 	{
@@ -50,7 +62,20 @@ ERequestHttpStatus UHttpService::RequestHttp(EHttpRequestType InRequestType, con
 		HttpRequestPtr->SetContentAsString(RequestBody);
 	}
 
-	//HttpRequestPtr->SetHeader()
+	if (InRequestType == EHttpRequestType::Post)
+	{
+		HttpRequestPtr->SetHeader("Content-Type", "application/json");
+	}
+
+	for (auto Header : InHeaders)
+	{
+		if (Header.Key.IsEmpty() || Header.Key.IsEmpty())
+		{
+			continue;
+		}
+
+		HttpRequestPtr->SetHeader(Header.Key, Header.Value);
+	}
 
 	HttpRequestPtr->OnProcessRequestComplete().BindLambda(
 		[&](FHttpRequestPtr InRequest, FHttpResponsePtr InResponse, bool IsConnectedSuccessfully)
@@ -62,37 +87,23 @@ ERequestHttpStatus UHttpService::RequestHttp(EHttpRequestType InRequestType, con
 
 			HttpRequestPtr.Reset();
 
-			TSharedPtr<FJsonObject> ResponseObject;
+			FString Response = InResponse->GetContentAsString();;
 
 			if (IsConnectedSuccessfully)
 			{
-				UE_LOG(HttpService, Log, TEXT("Response: %s"), *InResponse->GetContentAsString());
-				ResponseObject = PackageResponseToJsonObject(InResponse);
+				UE_LOG(HttpService, Log, TEXT("Response: %s"), *Response);
 			}
 			else
 			{
 				UE_LOG(HttpService, Error, TEXT("Connection not successfull!"));
+				UE_LOG(HttpService, Error, TEXT("Response: %s"), *Response);
 			}
 
-			OnRequestComplete().Broadcast(ResponseObject, IsConnectedSuccessfully);
+			OnRequestComplete().Broadcast(Response, IsConnectedSuccessfully);
 		});
 	HttpRequestPtr->ProcessRequest();
 
 	UE_LOG(HttpService, Log, TEXT("Process request..."));
 
 	return ERequestHttpStatus::Success;
-}
-
-TSharedPtr<FJsonObject> UHttpService::PackageResponseToJsonObject(FHttpResponsePtr InResponse)
-{
-	TSharedPtr<FJsonObject> Result;
-
-	if (!InResponse.IsValid())
-	{
-		return Result;
-	}
-
-	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(InResponse->GetContentAsString());
-	FJsonSerializer::Deserialize(Reader, Result);
-	return Result;
 }

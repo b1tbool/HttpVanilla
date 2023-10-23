@@ -3,6 +3,7 @@
 #include "Blueprint/UserWidget.h"
 #include "HttpRequestWidget.generated.h"
 
+class UHttpPhantomSubsystem;
 class UEditableText;
 class UTextBlock;
 class UButton;
@@ -23,11 +24,14 @@ protected:
 	void AddText(const FString& InString) const;
 
 private:
-	void HandleRequestComplete(const TSharedPtr<FJsonObject>& InResponse, bool IsConnectedSuccessfully);
+	void HandleRequestComplete(const FString& InResponse, bool IsConnectedSuccessfully);
 
 protected:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (BindWidget))
-	UEditableText* UrlEditableText = nullptr;
+	UEditableText* PostEditableText = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (BindWidget))
+	UEditableText* GetEditableText = nullptr;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (BindWidget))
 	UEditableText* LoginEditableText = nullptr;
@@ -40,4 +44,8 @@ protected:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (BindWidget))
 	UTextBlock* ResultTextBlock = nullptr;
+
+private:
+	UPROPERTY()
+	UHttpPhantomSubsystem* HttpPhantomSubsystem = nullptr;
 };

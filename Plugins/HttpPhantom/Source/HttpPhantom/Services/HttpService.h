@@ -15,19 +15,18 @@ class HTTPPHANTOM_API UHttpService : public UObject, public IServiceInterface
 	GENERATED_BODY()
 
 protected:
-	DECLARE_EVENT_TwoParams(UHttpService, FOnRequestComplete, const TSharedPtr<FJsonObject>& /*InResponse*/, bool /*IsConnectedSuccessfully*/);
+	DECLARE_EVENT_TwoParams(UHttpService, FOnRequestComplete, const FString& /*InResponse*/, bool /*IsConnectedSuccessfully*/);
 
 public:
 	void Deinit() override;
 
 	bool IsServiceCompleteRequests() const override;
 
-	ERequestHttpStatus RequestHttp(EHttpRequestType InRequestType, const FString& InUrl, const TSharedPtr<FJsonObject>& InMessage);
+	void UnsubscribeFromAll(UObject* InObject) override;
+
+	ERequestHttpStatus RequestHttp(EHttpRequestType InRequestType, const FString& InUrl, const TMap<FString, FString>& InHeaders, const TSharedPtr<FJsonObject>& InMessage);
 
 	FOnRequestComplete& OnRequestComplete() { return RequestComplete; }
-
-protected:
-	TSharedPtr<FJsonObject> PackageResponseToJsonObject(FHttpResponsePtr InResponse);
 
 private:
 	FOnRequestComplete RequestComplete;

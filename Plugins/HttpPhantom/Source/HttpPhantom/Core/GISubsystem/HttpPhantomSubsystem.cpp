@@ -22,7 +22,7 @@ void UHttpPhantomSubsystem::Deinitialize()
 	UE_LOG(HttpPhantom, Log, TEXT("Cleaned services on Deinitialize: %d"), Cleaned);
 }
 
-ERequestHttpStatus UHttpPhantomSubsystem::RequestHttp(EHttpRequestType InRequestType, const FString& InUrl, const TSharedPtr<FJsonObject>& InMessage)
+ERequestHttpStatus UHttpPhantomSubsystem::RequestHttp(EHttpRequestType InRequestType, const FString& InUrl, const TMap<FString, FString>& InHeaders, const TSharedPtr<FJsonObject>& InMessage)
 {
 	const auto RemoveUsedSerivce = [&]()
 		{
@@ -32,7 +32,7 @@ ERequestHttpStatus UHttpPhantomSubsystem::RequestHttp(EHttpRequestType InRequest
 
 	UHttpService* NewService = CreateNewService<UHttpService>();
 	RedirectDelegate(this, NewService->OnRequestComplete(), OnRequestCompletePhantom(), RemoveUsedSerivce);
-	return NewService->RequestHttp(InRequestType, InUrl, InMessage);
+	return NewService->RequestHttp(InRequestType, InUrl, InHeaders, InMessage);
 }
 
 int32 UHttpPhantomSubsystem::CleanServices()
@@ -70,6 +70,7 @@ void UHttpPhantomSubsystem::RemoveUsedService()
 
 		if (ServicesArray[Index]->IsServiceCompleteRequests())
 		{
+			ServicesArray[Index]->UnsubscribeFromAll(this);
 			IndexService = Index;
 			break;
 		}

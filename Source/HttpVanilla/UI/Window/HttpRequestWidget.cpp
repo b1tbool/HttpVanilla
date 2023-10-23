@@ -2,6 +2,7 @@
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Components/EditableText.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "HttpPhantom/Data/HttpRequestData.h"
 #include "HttpPhantom/Library/HttpPhantomLibrary.h"
 #include "HttpPhantom/Data/Status/RequestHttpStatus.h"
@@ -26,44 +27,57 @@ void UHttpRequestWidget::NativeDestruct()
 		StartButton->OnPressed.RemoveAll(this);
 	}
 
-	if (UrlEditableText)
+	if (PostEditableText)
 	{
-		UrlEditableText->SetText(FText::FromString("https://jsonplaceholder.typicode.com/todos/1"));
+		PostEditableText->SetText(FText::FromString("https://stanzza-api.aicrobotics.ru/api/auth/login"));
+	}
+
+	if (GetEditableText)
+	{
+		GetEditableText->SetText(FText::FromString("https://stanzza-api.aicrobotics.ru/api/v1/catalog/tree"));
 	}
 }
 
 void UHttpRequestWidget::HandleClickedLoginButton()
 {
-	UHttpPhantomSubsystem* HttpPhantomSubsystem = UHttpPhantomLibrary::GetHttpPhantomSubsystem(GetWorld());
 	if (!HttpPhantomSubsystem)
 	{
-		return;
+		HttpPhantomSubsystem = UHttpPhantomLibrary::GetHttpPhantomSubsystem(GetWorld());
 	}
 
-	if (!UrlEditableText || !LoginEditableText || !PasswordEditableText)
+	if (!PostEditableText || !LoginEditableText || !PasswordEditableText)
 	{
 		return;
 	}
 
-	if (UrlEditableText->GetText().IsEmpty())
+	/*if (PostEditableText->GetText().IsEmpty())
+	{
+		return;
+	}*/
+
+	if (GetEditableText->GetText().IsEmpty())
 	{
 		return;
 	}
 
-	if (LoginEditableText->GetText().IsEmpty())
+	/*if (LoginEditableText->GetText().IsEmpty())
 	{
 		return;
-	}
+	}*/
 
-	if (PasswordEditableText->GetText().IsEmpty())
+	/*if (PasswordEditableText->GetText().IsEmpty())
 	{
 		return;
-	}
+	}*/
 
 	const TSharedPtr<FJsonObject> Message = MakeShareable(new FJsonObject);
+	Message->SetStringField("login", LoginEditableText->GetText().ToString());
+	Message->SetStringField("password", PasswordEditableText->GetText().ToString());
+	Message->SetStringField("fingerprint", UKismetSystemLibrary::GetDeviceId());
 
 	HttpPhantomSubsystem->OnRequestCompletePhantom().AddUObject(this, &UHttpRequestWidget::HandleRequestComplete);
-	HttpPhantomSubsystem->RequestHttp(EHttpRequestType::Get,UrlEditableText->GetText().ToString(), Message);
+	//HttpPhantomSubsystem->RequestHttp(EHttpRequestType::Post, PostEditableText->GetText().ToString(), {}, Message);
+	HttpPhantomSubsystem->RequestHttp(EHttpRequestType::Get, GetEditableText->GetText().ToString(), {}, {});
 }
 
 void UHttpRequestWidget::AddText(const FString& InString) const
@@ -76,9 +90,25 @@ void UHttpRequestWidget::AddText(const FString& InString) const
 	ResultTextBlock->SetText(FText::FromString(ResultTextBlock->GetText().ToString() + '\n' + InString));
 }
 
-void UHttpRequestWidget::HandleRequestComplete(const TSharedPtr<FJsonObject>& InResponse, bool IsConnectedSuccessfully)
+void UHttpRequestWidget::HandleRequestComplete(const FString& InResponse, bool IsConnectedSuccessfully)
 {
 	AddText(IsConnectedSuccessfully
-		? UHttpPhantomLibrary::JsonObjectToString(InResponse)
+		? InResponse
 		: "Error: Connection not successfully!");
+
+	HttpPhantomSubsystem->OnRequestCompletePhantom().RemoveAll(this);
+
+	/*UHttpPhantomSubsystem* HttpPhantomSubsystem = UHttpPhantomLibrary::GetHttpPhantomSubsystem(GetWorld());
+	if (!HttpPhantomSubsystem)
+	{
+		return;
+	}
+
+	HttpPhantomSubsystem->OnRequestCompletePhantom().AddLambda([&](const TSharedPtr<FJsonObject>& InResponse, bool IsConnectedSuccessfully)
+	{
+			AddText(IsConnectedSuccessfully
+				? UHttpPhantomLibrary::JsonObjectToString(InResponse)
+				: "Error: Connection not successfully!");
+	});
+	HttpPhantomSubsystem->RequestHttp(EHttpRequestType::Get, GetEditableText->GetText().ToString(), {}, {});*/
 }

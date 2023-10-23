@@ -15,7 +15,7 @@ class HTTPPHANTOM_API UHttpPhantomSubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 
 protected:
-	DECLARE_MULTICAST_DELEGATE_TwoParams(FOnRequestCompletePhantom, const TSharedPtr<FJsonObject>& /*InResponse*/, bool /*IsConnectedSuccessfully*/);
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FOnRequestCompletePhantom, const FString& /*InResponse*/, bool /*IsConnectedSuccessfully*/);
 
 public:
 	FOnRequestCompletePhantom& OnRequestCompletePhantom() { return RequestCompletePhantom; }
@@ -24,7 +24,7 @@ public:
 	void Initialize(FSubsystemCollectionBase& Collection) override;
 	void Deinitialize() override;
 
-	ERequestHttpStatus RequestHttp(EHttpRequestType InRequestType, const FString& InUrl, const TSharedPtr<FJsonObject>& InMessage);
+	ERequestHttpStatus RequestHttp(EHttpRequestType InRequestType, const FString& InUrl, const TMap<FString, FString>& InHeaders, const TSharedPtr<FJsonObject>& InMessage);
 
 private:
 	int32 CleanServices();

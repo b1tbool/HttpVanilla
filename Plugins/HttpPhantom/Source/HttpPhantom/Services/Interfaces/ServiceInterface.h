@@ -17,5 +17,6 @@ public:
 	virtual void Init() {}
 	virtual void Deinit() {}
 
+	virtual void UnsubscribeFromAll(UObject* InObject) { }
 	virtual bool IsServiceCompleteRequests() const { return false; }
 };
