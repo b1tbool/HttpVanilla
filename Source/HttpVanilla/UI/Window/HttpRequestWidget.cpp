@@ -36,6 +36,16 @@ void UHttpRequestWidget::NativeDestruct()
 	{
 		GetEditableText->SetText(FText::FromString("https://stanzza-api.aicrobotics.ru/api/v1/catalog/tree"));
 	}
+
+	/*if (LoginEditableText)
+	{
+		LoginEditableText->SetText(FText::FromString(""));
+	}*/
+
+	/*if (PasswordEditableText)
+	{
+		PasswordEditableText->SetText(FText::FromString(""));
+	}*/
 }
 
 void UHttpRequestWidget::HandleClickedLoginButton()
@@ -50,34 +60,36 @@ void UHttpRequestWidget::HandleClickedLoginButton()
 		return;
 	}
 
-	/*if (PostEditableText->GetText().IsEmpty())
+	if (PostEditableText->GetText().IsEmpty())
 	{
 		return;
-	}*/
+	}
 
 	if (GetEditableText->GetText().IsEmpty())
 	{
 		return;
 	}
 
-	/*if (LoginEditableText->GetText().IsEmpty())
+	if (LoginEditableText->GetText().IsEmpty())
 	{
 		return;
-	}*/
+	}
 
-	/*if (PasswordEditableText->GetText().IsEmpty())
+	if (PasswordEditableText->GetText().IsEmpty())
 	{
 		return;
-	}*/
+	}
 
 	const TSharedPtr<FJsonObject> Message = MakeShareable(new FJsonObject);
 	Message->SetStringField("login", LoginEditableText->GetText().ToString());
 	Message->SetStringField("password", PasswordEditableText->GetText().ToString());
-	Message->SetStringField("fingerprint", UKismetSystemLibrary::GetDeviceId());
+	Message->SetStringField("fingerprint", /*UKismetSystemLibrary::GetDeviceId()*/"HelloWorld");
+
+	TMap<FString, FString> Temp;
+	Temp.Add("Accept", "application/json");
 
 	HttpPhantomSubsystem->OnRequestCompletePhantom().AddUObject(this, &UHttpRequestWidget::HandleRequestComplete);
-	//HttpPhantomSubsystem->RequestHttp(EHttpRequestType::Post, PostEditableText->GetText().ToString(), {}, Message);
-	HttpPhantomSubsystem->RequestHttp(EHttpRequestType::Get, GetEditableText->GetText().ToString(), {}, {});
+	HttpPhantomSubsystem->RequestHttp(EHttpRequestType::Post, PostEditableText->GetText().ToString(), Temp , Message);
 }
 
 void UHttpRequestWidget::AddText(const FString& InString) const
@@ -96,19 +108,18 @@ void UHttpRequestWidget::HandleRequestComplete(const FString& InResponse, bool I
 		? InResponse
 		: "Error: Connection not successfully!");
 
-	HttpPhantomSubsystem->OnRequestCompletePhantom().RemoveAll(this);
-
-	/*UHttpPhantomSubsystem* HttpPhantomSubsystem = UHttpPhantomLibrary::GetHttpPhantomSubsystem(GetWorld());
 	if (!HttpPhantomSubsystem)
 	{
 		return;
 	}
 
-	HttpPhantomSubsystem->OnRequestCompletePhantom().AddLambda([&](const TSharedPtr<FJsonObject>& InResponse, bool IsConnectedSuccessfully)
+	HttpPhantomSubsystem->OnRequestCompletePhantom().RemoveAll(this);
+
+	HttpPhantomSubsystem->OnRequestCompletePhantom().AddLambda([&](const FString& InResponse, bool IsConnectedSuccessfully)
 	{
 			AddText(IsConnectedSuccessfully
-				? UHttpPhantomLibrary::JsonObjectToString(InResponse)
+				? InResponse
 				: "Error: Connection not successfully!");
 	});
-	HttpPhantomSubsystem->RequestHttp(EHttpRequestType::Get, GetEditableText->GetText().ToString(), {}, {});*/
+	HttpPhantomSubsystem->RequestHttp(EHttpRequestType::Get, GetEditableText->GetText().ToString(), {}, {});
 }
